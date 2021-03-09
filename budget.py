@@ -1,4 +1,5 @@
 import re
+import math
 
 
 class Category:
@@ -117,21 +118,86 @@ class Category:
         else:
             return True
 
+    def get_withdrawals(self):
+        withdrawals = 0
+        for el in self.ledger:
+            if el["amount"] < 0:
+                # subtract the minus to make positive
+                withdrawals -= el["amount"]
+        return withdrawals
 
-# food = Category("Food")
-# food.deposit(1000, "initial deposit")
-# food.withdraw(10.15, "groceries")
-# food.withdraw(15.89, "restaurant and more food for dessert")
-# print(food.get_balance())
-# clothing = Category("Clothing")
-# food.transfer(50, clothing)
-# clothing.withdraw(25.55)
-# clothing.withdraw(100)
-# auto = Category("Auto")
-# auto.deposit(1000, "initial deposit")
-# auto.withdraw(15)
-# print(food)
-# print(clothing)
-# print(auto)
 
-# def create_spend_chart(categories):
+def create_spend_chart(categories):
+    output = "Percentage spent by category\n"
+
+    # first calc percentages
+    withdrawals = []
+    for category in categories:
+        withdrawals.append(category.get_withdrawals())
+
+    # calc total
+    sum = 0
+    for balance in withdrawals:
+        sum += balance
+
+    # calc perecents
+    withdrawalperc = []
+    for balance in withdrawals:
+        # balance over sum to get %, then multiply 10 so we can floor (have to always round down), then by 10 again
+        withdrawalperc.append(math.floor((balance/sum)*10)*10)
+
+    # now loop through 100-0
+    loop = 100
+    while loop >= 0:
+        strloop = str(loop)
+        # need to add spaces to right alignn the numbers
+        spaces = 3 - len(strloop)
+
+        while spaces > 0:
+            output += " "
+            spaces -= 1
+
+        output += strloop + "| "
+
+        # loop through percentages
+        for perc in withdrawalperc:
+            if perc >= loop:
+                output += "o  "
+            else:
+                output += "   "
+
+        output += "\n"
+
+        loop -= 10
+
+    # add the dashes before the cat names
+    output += "    ----------\n"
+
+    # first get the longest cat name so we know the number of times to loop
+    maxcat = 0
+    for category in categories:
+        name = category.name
+        if len(name) > maxcat:
+            maxcat = len(name)
+
+    # now loop through each line, determined by max cat length
+    i = 0
+    while maxcat > i:
+        # add the initial empty space
+        output += "     "
+
+        # loop through each category
+        for category in categories:
+            char = category.name[i:i + 1]
+            if char == "":  # if we're past the end of the category name we still need to add an empty space
+                char = " "
+            output += char+"  "
+
+        i += 1
+
+        output += "\n"
+
+    # get rid of last newline
+    output=output[:len(output)-1]
+
+    return output
